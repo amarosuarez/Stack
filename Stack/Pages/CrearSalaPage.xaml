@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Stack.Pages.CrearSalaPage">
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#003366" Offset="0.0" />
+            <GradientStop Color="#D96666" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="15">
+        <Label Text="STACK"
+               FontSize="36"
+               FontAttributes="Bold"
+               TextColor="White"
+               HorizontalOptions="Center"
+               Margin="0,50,0,10" />
+        <Label Text="Estás creando una sala"
+               FontSize="18"
+               TextColor="White"
+               HorizontalOptions="Center"
+               Margin="0,0,0,20"/>
+        <Entry Placeholder="Introduce tu nombre"
+               WidthRequest="250"
+               BackgroundColor="White"
+               TextColor="Black"
+               Margin="0,0,0,10"/>
+        <Entry Placeholder="Introduce el nombre de la sala"
+               WidthRequest="250"
+               BackgroundColor="White"
+               TextColor="Black"
+               Margin="0,0,0,20"/>
+        <Button Text="CREAR SALA"
+                BackgroundColor="White"
+                TextColor="Black"
+                FontAttributes="Bold"
+                CornerRadius="10"
+                WidthRequest="200"
+                HeightRequest="50"
+                Clicked="OnCrearSalaClicked"
+                Margin="0,0,0,10"/>
+        <Button Text="VOLVER"
+                BackgroundColor="Black"
+                TextColor="White"
+                FontAttributes="Bold"
+                CornerRadius="10"
+                WidthRequest="200"
+                HeightRequest="50"
+                Clicked="OnVolverClicked"
+                Margin="0,0,0,10"/>
+    </VerticalStackLayout>
+</ContentPage>

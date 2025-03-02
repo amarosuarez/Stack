@@ -7,9 +7,13 @@
     Shell.FlyoutBehavior="Disabled"
     Title="Stack">
 
+    <ShellContent Title="Home" Route="home" ContentTemplate="{DataTemplate local:Pages.HomePage}" />
+    <ShellContent Title="Crear Sala" Route="crearSala" ContentTemplate="{DataTemplate local:Pages.CrearSalaPage}" />
+    <ShellContent Title="Unirse Sala" Route="unirseSala" ContentTemplate="{DataTemplate local:Pages.UnirseSalaPage}" />
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Partida"
+        ContentTemplate="{DataTemplate local:Pages.MainPage}"
+        Route="partida" />
+
 
 </Shell>

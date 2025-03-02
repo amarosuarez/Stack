@@ -1,4 +1,6 @@
-﻿namespace Stack
+﻿using Stack.Pages;
+
+namespace Stack
 {
     public partial class App : Application
     {

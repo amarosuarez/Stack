@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Timers;
 
-namespace Stack
+namespace Stack.Pages
 {
     public partial class MainPage : ContentPage
     {
@@ -12,6 +12,9 @@ namespace Stack
         private System.Timers.Timer _timer;
         private const float MoveLimit = 100; // Límite del área de movimiento
         private List<DynamicRombo> _dynamicRombos = new List<DynamicRombo>();
+        private PointF[] _lastRomboPoints; // Puntos del rombo anterior
+        private PointF[] _currentRomboPoints; // Puntos del rombo actual
+        private PointF[] _recortadoPoints; // Puntos de la figura recortada
 
         public MainPage()
         {
@@ -52,23 +55,34 @@ namespace Stack
             if (_dynamicRombos.Count > 0)
             {
                 _dynamicRombos[^1].IsMoving = false; // Detener el último rombo
+
+                // Guardar los puntos del rombo actual
+                _currentRomboPoints = GetRomboPoints(_dynamicRombos[^1]);
+
+                // Si hay un rombo anterior, comparar los puntos
+                if (_dynamicRombos.Count > 1)
+                {
+                    _lastRomboPoints = GetRomboPoints(_dynamicRombos[^2]); // Guardar los puntos del rombo anterior
+
+                    // Comparar los puntos de los rombos
+                    if (!CheckOverlap(_lastRomboPoints, _currentRomboPoints))
+                    {
+                        // Mostrar un mensaje si no hay superposición
+                        DisplayAlert("Atención", "El nuevo rombo no encaja con el anterior.", "Aceptar");
+                    }
+                    else
+                    {
+                        // Calcular la figura recortada
+                        _recortadoPoints = CalcularRecortado(_lastRomboPoints, _currentRomboPoints);
+
+                        // Forzar el redibujado para mostrar la figura recortada
+                        RomboGraphicsView.Invalidate();
+                    }
+                }
             }
 
             // Crear un nuevo rombo dinámico en el centro con un color aleatorio
             CreateRombo();
-
-            // Verificar si el nuevo rombo encaja con el anterior
-            if (_dynamicRombos.Count > 1)
-            {
-                var lastRombo = _dynamicRombos[^2]; // Rombo anterior
-                var newRombo = _dynamicRombos[^1]; // Nuevo rombo
-
-                if (!CheckOverlap(lastRombo, newRombo))
-                {
-                    // Mostrar un mensaje si no hay superposición
-                    DisplayAlert("Atención", "El nuevo rombo no encaja con el anterior.", "Aceptar");
-                }
-            }
         }
 
         private void CreateRombo()
@@ -95,24 +109,36 @@ namespace Stack
             );
         }
 
-        private bool CheckOverlap(DynamicRombo rombo1, DynamicRombo rombo2)
+        private bool CheckOverlap(PointF[] rombo1Points, PointF[] rombo2Points)
         {
-            // Definir los puntos del rombo1
-            var points1 = GetRomboPoints(rombo1);
-
-            // Definir los puntos del rombo2
-            var points2 = GetRomboPoints(rombo2);
-
             // Verificar si algún punto de rombo2 coincide con rombo1
-            foreach (var point in points2)
+            foreach (var point in rombo2Points)
             {
-                if (IsPointInsideRombo(point, points1))
+                if (IsPointInsideRombo(point, rombo1Points))
                 {
                     return true; // Hay superposición
                 }
             }
 
             return false; // No hay superposición
+        }
+
+        private PointF[] CalcularRecortado(PointF[] lastRomboPoints, PointF[] currentRomboPoints)
+        {
+            // Calcular la línea superior del rombo anterior (A)
+            float lastTop = lastRomboPoints[0].Y; // Línea superior del rombo A
+
+            // Calcular la línea derecha del rombo actual (B)
+            float currentRight = currentRomboPoints[1].X; // Línea derecha del rombo B
+
+            // Calcular los puntos de la figura recortada
+            return new PointF[]
+            {
+                new PointF(lastRomboPoints[1].X, lastTop), // Esquina superior derecha del rombo A
+                new PointF(currentRight, lastTop),         // Esquina superior derecha del rombo B
+                new PointF(currentRight, currentRomboPoints[2].Y), // Esquina inferior derecha del rombo B
+                new PointF(lastRomboPoints[1].X, currentRomboPoints[2].Y) // Esquina inferior derecha del rombo A
+            };
         }
 
         private PointF[] GetRomboPoints(DynamicRombo rombo)
@@ -207,6 +233,7 @@ namespace Stack
     public class RomboDrawable : IDrawable
     {
         private List<DynamicRombo> _dynamicRombos;
+        private PointF[] _recortadoPoints; // Puntos de la figura recortada
 
         public RomboDrawable(List<DynamicRombo> dynamicRombos)
         {
@@ -217,19 +244,29 @@ namespace Stack
         {
             // Definir el tamaño del rombo
             float romboWidth = 100;
-            float romboHeight = 100;
 
             // Calcular el centro de la pantalla
             float centerX = dirtyRect.Width / 2;
             float centerY = dirtyRect.Height / 2;
 
             // Dibujar el rombo estático (centrado y sin movimiento)
-            DrawRombo(canvas, centerX, centerY, romboWidth, romboHeight, Colors.Green);
+            DrawRombo(canvas, centerX, centerY, romboWidth, 100, Colors.Green);
 
             // Dibujar todos los rombos dinámicos
             foreach (var rombo in _dynamicRombos)
             {
-                DrawRombo(canvas, centerX + rombo.OffsetX, centerY + rombo.OffsetY, romboWidth, romboHeight, rombo.Color);
+                DrawRombo(canvas, centerX + rombo.OffsetX, centerY + rombo.OffsetY, romboWidth, 100, rombo.Color);
+            }
+
+            // Dibujar la figura recortada en la esquina superior derecha
+            if (_recortadoPoints != null)
+            {
+                float margin = 20; // Margen desde la esquina superior derecha
+                float offsetX = dirtyRect.Width - 100 - margin; // Posición X de la figura recortada
+                float offsetY = margin; // Posición Y de la figura recortada
+
+                // Dibujar la figura recortada
+                DrawRecortado(canvas, offsetX, offsetY);
             }
         }
 
@@ -245,6 +282,24 @@ namespace Stack
 
             // Dibujar el rombo
             canvas.FillColor = color;
+            canvas.StrokeColor = Colors.Black;
+            canvas.StrokeSize = 2;
+            canvas.FillPath(path);
+            canvas.DrawPath(path);
+        }
+
+        private void DrawRecortado(ICanvas canvas, float offsetX, float offsetY)
+        {
+            // Crear un PathF para la figura recortada
+            PathF path = new PathF();
+            path.MoveTo(offsetX, offsetY); // Esquina superior izquierda
+            path.LineTo(offsetX + 100, offsetY); // Esquina superior derecha
+            path.LineTo(offsetX + 100, offsetY + 100); // Esquina inferior derecha
+            path.LineTo(offsetX, offsetY + 100); // Esquina inferior izquierda
+            path.Close(); // Cerrar el path para completar la figura
+
+            // Dibujar la figura recortada
+            canvas.FillColor = Colors.Red; // Color de la figura recortada
             canvas.StrokeColor = Colors.Black;
             canvas.StrokeSize = 2;
             canvas.FillPath(path);

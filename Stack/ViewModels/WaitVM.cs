@@ -11,11 +11,9 @@ using System.Threading.Tasks;
 
 namespace Stack.ViewModels
 {
-    [QueryProperty(nameof(_connection), "connection")]
     public class WaitVM : INotifyPropertyChanged
     {
         #region Atributos
-        private readonly HubConnection _connection;
         private String _opponentName;
         private DelegateCommand volverCommand;
         #endregion
@@ -38,23 +36,40 @@ namespace Stack.ViewModels
         {
             volverCommand = new DelegateCommand(volverCommandExecuted);
 
-            // Creamos la conexión
-            _connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:5279/chathub")
-                .Build();
-
-            // Nos conectamos
-            Task.Run(async () =>
-            {
-                await MainThread.InvokeOnMainThreadAsync(async () => await _connection.StartAsync());
-            });
-
-            // Recibimos el nombre del jugador cuando se una
-            _connection.On<String>("ReceiveNamePlayer", receiveNamePlayer);
+            // Inicia la conexión de SignalR de forma asíncrona
+            Task.Run(async () => await InitConnection());
         }
         #endregion
 
         #region Métodos
+        private async Task InitConnection()
+        {
+            try
+            {
+                await GlobalConnection.StartConnection();
+
+                // Verifica si la conexión fue exitosa
+                if (GlobalConnection.connection.State == HubConnectionState.Connected)
+                {
+                    Console.WriteLine("Conexión exitosa");
+
+                    // Obtiene el nombre de la sala
+                    string roomName = await GlobalConnection.connection.InvokeAsync<string>("GetMyRoom");
+
+                    // Recibe el mensaje cuando otro jugador se conecta
+                    GlobalConnection.connection.On<string>("ReceiveNamePlayer", receiveNamePlayer);
+                }
+                else
+                {
+                    Console.WriteLine("Conexión no establecida");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error de conexión: {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// Método que recibe el nombre del oponente y lo pinta en pantalla<br>
         /// Pre: Ninguno</br>
@@ -63,9 +78,13 @@ namespace Stack.ViewModels
         /// <param name="playerName">Nombre del oponente</param>
         private async void receiveNamePlayer(String playerName)
         {
-            await MainThread.InvokeOnMainThreadAsync(async () => _opponentName = playerName);
-            NotifyPropertyChanged(nameof(OpponentName));
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                _opponentName = $"{playerName} se ha unido a la sala!";
+                NotifyPropertyChanged(nameof(OpponentName));
+            });
         }
+
         #endregion
 
         #region Commands

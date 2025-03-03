@@ -1,47 +1,54 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
-using Stack.ViewModels.Utilidades;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
-using System.Data.Common;
+using Microsoft.AspNetCore.SignalR.Client;
+using Stack.ViewModels.Utilidades;
 
 namespace Stack.ViewModels
 {
-    public class CrearSalaVM : INotifyPropertyChanged
+    public class UnirseSalaVM : INotifyPropertyChanged
     {
         #region Atributos
-        private string _nameRoom;
-        private string _playerName;
-        private DelegateCommand crearSalaCommand;
+        private String _nameRoom;
+        private String _playerName;
+        private DelegateCommand unirseCommand;
         private DelegateCommand volverCommand;
         #endregion
 
         #region Propiedades
-        public string NameRoom
+        public String NameRoom
         {
             get { return _nameRoom; }
             set
             {
-                _nameRoom = value;
-                crearSalaCommand.RaiseCanExecuteChanged();
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _nameRoom = value;
+                    unirseCommand.RaiseCanExecuteChanged();
+                }
             }
         }
 
-        public string PlayerName
+        public String PlayerName
         {
             get { return _playerName; }
             set
             {
-                _playerName = value;
-                crearSalaCommand.RaiseCanExecuteChanged();
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _playerName = value;
+                    unirseCommand.RaiseCanExecuteChanged();
+                }
             }
         }
 
-        public DelegateCommand CrearSalaCommand
+        public DelegateCommand UnirseCommand
         {
-            get { return crearSalaCommand; }
+            get { return unirseCommand; }
         }
 
         public DelegateCommand VolverCommand
@@ -51,40 +58,54 @@ namespace Stack.ViewModels
         #endregion
 
         #region Constructores
-        public CrearSalaVM()
+        public UnirseSalaVM()
         {
-            crearSalaCommand = new DelegateCommand(crearSalaCommandExecuted, crearSalaCommandCanExecute);
+            unirseCommand = new DelegateCommand(unirseSalaCommandExecuted, unirseSalaCommandCanExecute);
             volverCommand = new DelegateCommand(salirCommandExecuted);
         }
         #endregion
 
-        #region Commands
+        #region Commands 
         /// <summary>
-        /// Función que crea una sala con el nombre especificado<br>
+        /// Función que se une a una sala con el nombre especificado<br>
         /// Pre: Debe haberse especificado el grupo y el nombre del jugador</br>
         /// Post: Ninguno
         /// </summary>
-        public async void crearSalaCommandExecuted()
+        public async void unirseSalaCommandExecuted()
         {
             if (!string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName))
             {
-                await GlobalConnection.StartConnection();
-                await GlobalConnection.connection.InvokeCoreAsync("JoinRoom", args: new[]
-                 { _nameRoom, _playerName });
+                Console.WriteLine($"Unirse a la sala: {_nameRoom}, con el jugador: {_playerName}");
 
-                crearSalaCommand.RaiseCanExecuteChanged();
-                limpiarTexts();
-                await Shell.Current.GoToAsync("///wait");
+                await GlobalConnection.StartConnection();
+
+                try
+                {
+                    await GlobalConnection.connection.InvokeCoreAsync("JoinRoom", args: new[] { _nameRoom, _playerName });
+                    Console.WriteLine("JoinRoom exitoso.");
+
+                    await GlobalConnection.connection.InvokeCoreAsync("ReceiveNamePlayer", args: new[] { _playerName, _nameRoom });
+                    Console.WriteLine("Nombre del jugador recibido.");
+
+                    unirseCommand.RaiseCanExecuteChanged();
+                    limpiarTexts();
+                    //await Shell.Current.GoToAsync("///wait");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error al unirse a la sala: {ex.Message}");
+                }
             }
         }
 
+
         /// <summary>
-        /// Función que determina si el command para crear la sala está activo o no<br>
+        /// Función que determina si el command para unirse a la sala está activo o no<br>
         /// Pre: Ninguno</br>
         /// Post: Ninguno
         /// </summary>
         /// <returns>Puede ejecutarse o no el command</returns>
-        public bool crearSalaCommandCanExecute()
+        public bool unirseSalaCommandCanExecute()
         {
             return !string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName);
         }

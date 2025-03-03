@@ -1,36 +1,42 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Stack.ViewModels.Utilidades;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Maui.Controls;
+using System.Data.Common;
 
 namespace Stack.ViewModels
 {
     public class CrearSalaVM : INotifyPropertyChanged
     {
         #region Atributos
-        private readonly HubConnection _connection;
-        private String _nameRoom;
-        private String _playerName;
+        private string _nameRoom;
+        private string _playerName;
         private DelegateCommand crearSalaCommand;
         private DelegateCommand volverCommand;
         #endregion
 
         #region Propiedades
-        public String NameRoom
+        public string NameRoom
         {
             get { return _nameRoom; }
-            set { _nameRoom = value; }
+            set
+            {
+                _nameRoom = value;
+                crearSalaCommand.RaiseCanExecuteChanged();
+            }
         }
 
-        public String PlayerName
+        public string PlayerName
         {
             get { return _playerName; }
-            set { _playerName = value; }
+            set
+            {
+                _playerName = value;
+                crearSalaCommand.RaiseCanExecuteChanged();
+            }
         }
 
         public DelegateCommand CrearSalaCommand
@@ -47,7 +53,18 @@ namespace Stack.ViewModels
         #region Constructores
         public CrearSalaVM()
         {
+            GlobalConnection.connection = new HubConnectionBuilder()
+                .WithUrl(GlobalConnection.ruta)
+                .Build();
+
+            // Nos conectamos
+            Task.Run(async () =>
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () => await GlobalConnection.connection.StartAsync());
+            });
+
             crearSalaCommand = new DelegateCommand(crearSalaCommandExecuted, crearSalaCommandCanExecute);
+            volverCommand = new DelegateCommand(salirCommandExecuted);
         }
         #endregion
 
@@ -59,30 +76,55 @@ namespace Stack.ViewModels
         /// </summary>
         public async void crearSalaCommandExecuted()
         {
-            if (!string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName)) {
-                await _connection.InvokeCoreAsync("JoinRoom", args: new[]
+            if (!string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName))
+            {
+                await GlobalConnection.connection.InvokeCoreAsync("JoinRoom", args: new[]
                  { _nameRoom, _playerName });
 
-                //crearSalaCommandCanExecute.RaiseCanExecuteChanged();
+                crearSalaCommand.RaiseCanExecuteChanged();
+                limpiarTexts();
+                await Shell.Current.GoToAsync("///wait");
             }
         }
 
+        /// <summary>
+        /// Función que determina si el command para crear la sala está activo o no<br>
+        /// Pre: Ninguno</br>
+        /// Post: Ninguno
+        /// </summary>
+        /// <returns>Puede ejecutarse o no el command</returns>
         public bool crearSalaCommandCanExecute()
         {
-            return true;
+            return !string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName);
+        }
+
+        /// <summary>
+        /// Función que vuelve a la pantalla de home
+        /// </summary>
+        public async void salirCommandExecuted()
+        {
+            limpiarTexts();
+            await Shell.Current.GoToAsync("///home");
+        }
+        #endregion
+
+        #region Métodos
+        private void limpiarTexts()
+        {
+            // Limpiamos los textos
+            _nameRoom = "";
+            NotifyPropertyChanged(nameof(NameRoom));
+            _playerName = "";
+            NotifyPropertyChanged(nameof(PlayerName));
         }
         #endregion
 
         #region Notify
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
-
+        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
         {
-
-            PropertyChanged?.Invoke(this, new
-            PropertyChangedEventArgs(propertyName));
-
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
         #endregion
     }

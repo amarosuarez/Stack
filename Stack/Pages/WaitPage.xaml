@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Stack.ViewModels"
+             x:Class="Stack.Pages.WaitPage"
+             Title="WaitPage">
+    
+    <ContentPage.BindingContext>
+        <vm:WaitVM></vm:WaitVM>
+    </ContentPage.BindingContext>
+
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#003366" Offset="0.0" />
+            <GradientStop Color="#D96666" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+    
+    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
+        <Label Text="Sala de espera"
+           FontSize="36"
+           FontAttributes="Bold"
+           TextColor="White"
+           HorizontalOptions="Center"
+           Margin="0,50,0,30" />
+        
+        <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
+            <Label Text="Esperando a que se una un jugador..."
+               FontSize="18"
+               TextColor="White"
+               HorizontalOptions="Center"
+               Margin="0,0,0,20"/>
+            
+            <ActivityIndicator IsRunning="True" 
+                   IsVisible="True" 
+                   Color="White"
+                   WidthRequest="50"
+                   HeightRequest="50"
+                   Margin="0,20,0,20"/>
+
+
+            <Button Text="SALIR"
+            BackgroundColor="Black"
+            TextColor="White"
+            FontAttributes="Bold"
+            CornerRadius="10"
+            WidthRequest="200"
+            HeightRequest="50"
+            Command="{Binding VolverCommand}"/>
+
+            <Label
+                Text="{Binding OpponentName}"
+                FontSize="30"
+                TextColor="White"/>
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+
+</ContentPage>

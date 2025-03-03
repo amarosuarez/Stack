@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Stack.ViewModels"
              x:Class="Stack.Pages.CrearSalaPage">
+
+    <ContentPage.BindingContext>
+        <vm:CrearSalaVM></vm:CrearSalaVM>
+    </ContentPage.BindingContext>
+
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#003366" Offset="0.0" />
@@ -24,11 +30,13 @@
                WidthRequest="250"
                BackgroundColor="White"
                TextColor="Black"
+               Text="{Binding PlayerName}"
                Margin="0,0,0,10"/>
         <Entry Placeholder="Introduce el nombre de la sala"
                WidthRequest="250"
                BackgroundColor="White"
                TextColor="Black"
+               Text="{Binding NameRoom}"
                Margin="0,0,0,20"/>
         <Button Text="CREAR SALA"
                 BackgroundColor="White"
@@ -37,7 +45,7 @@
                 CornerRadius="10"
                 WidthRequest="200"
                 HeightRequest="50"
-                Clicked="OnCrearSalaClicked"
+                Command="{Binding CrearSalaCommand}"
                 Margin="0,0,0,10"/>
         <Button Text="VOLVER"
                 BackgroundColor="Black"
@@ -46,7 +54,7 @@
                 CornerRadius="10"
                 WidthRequest="200"
                 HeightRequest="50"
-                Clicked="OnVolverClicked"
+                Command="{Binding VolverCommand}"
                 Margin="0,0,0,10"/>
     </VerticalStackLayout>
 </ContentPage>

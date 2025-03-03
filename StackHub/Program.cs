@@ -17,7 +17,7 @@ var app = builder.Build();
 // Agregado SignalR
 app.UseResponseCompression();
 
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", () => "Hola soy Amaro!!!");
 
 // Agregado SignalR
 app.MapHub<myHub>("/stackHub");

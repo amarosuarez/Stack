@@ -47,7 +47,29 @@ namespace Stack.ViewModels
         #region Constructores
         public CrearSalaVM()
         {
+            crearSalaCommand = new DelegateCommand(crearSalaCommandExecuted, crearSalaCommandCanExecute);
+        }
+        #endregion
 
+        #region Commands
+        /// <summary>
+        /// Función que crea una sala con el nombre especificado<br>
+        /// Pre: Debe haberse especificado el grupo y el nombre del jugador</br>
+        /// Post: Ninguno
+        /// </summary>
+        public async void crearSalaCommandExecuted()
+        {
+            if (!string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName)) {
+                await _connection.InvokeCoreAsync("JoinRoom", args: new[]
+                 { _nameRoom, _playerName });
+
+                //crearSalaCommandCanExecute.RaiseCanExecuteChanged();
+            }
+        }
+
+        public bool crearSalaCommandCanExecute()
+        {
+            return true;
         }
         #endregion
 

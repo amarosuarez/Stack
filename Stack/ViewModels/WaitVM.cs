@@ -11,10 +11,12 @@ using System.Threading.Tasks;
 
 namespace Stack.ViewModels
 {
+    [QueryProperty(nameof(PlayerName), "playerName")]
     public class WaitVM : INotifyPropertyChanged
     {
         #region Atributos
         private String _opponentName;
+        private String _playerName;
         private DelegateCommand volverCommand;
         #endregion
 
@@ -24,7 +26,16 @@ namespace Stack.ViewModels
             get { return _opponentName; }
             set { _opponentName = value; }
         }
-
+        
+        public String PlayerName
+        {
+            get { return _playerName; }
+            set
+            {
+                _playerName = Uri.UnescapeDataString(value);
+                NotifyPropertyChanged();
+            }
+        }
         public DelegateCommand VolverCommand
         {
             get { return volverCommand; }
@@ -51,13 +62,11 @@ namespace Stack.ViewModels
                 // Verifica si la conexión fue exitosa
                 if (GlobalConnection.connection.State == HubConnectionState.Connected)
                 {
-                    Console.WriteLine("Conexión exitosa");
-
                     // Obtiene el nombre de la sala
                     string roomName = await GlobalConnection.connection.InvokeAsync<string>("GetMyRoom");
 
-                    // Recibe el mensaje cuando otro jugador se conecta
-                    GlobalConnection.connection.On<string>("ReceiveNamePlayer", receiveNamePlayer);
+                    // Recibe el mensaje cuando hay dos jugadores en el grupo
+                    GlobalConnection.connection.On<string>("PlayersReady", receiveNamePlayer);
                 }
                 else
                 {
@@ -75,13 +84,14 @@ namespace Stack.ViewModels
         /// Pre: Ninguno</br>
         /// Post: Ninguno
         /// </summary>
-        /// <param name="playerName">Nombre del oponente</param>
-        private async void receiveNamePlayer(String playerName)
+        /// <param name="roomName">Nombre del oponente</param>
+        private async void receiveNamePlayer(String roomName)
         {
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                _opponentName = $"{playerName} se ha unido a la sala!";
-                NotifyPropertyChanged(nameof(OpponentName));
+                String opponentName = await GlobalConnection.connection.InvokeAsync<string>("GetOpponentName", roomName);
+
+                await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}");
             });
         }
 

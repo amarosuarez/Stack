@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using System.Data.Common;
+using Models;
 
 namespace Stack.ViewModels
 {
@@ -69,12 +70,19 @@ namespace Stack.ViewModels
             if (!string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName))
             {
                 await GlobalConnection.StartConnection();
-                await GlobalConnection.connection.InvokeCoreAsync("JoinRoom", args: new[]
-                 { _nameRoom, _playerName });
+                RoomJoinResult roomJoinResult = await GlobalConnection.connection.InvokeAsync<RoomJoinResult>("JoinRoom", _nameRoom, _playerName, true);
 
-                crearSalaCommand.RaiseCanExecuteChanged();
-                limpiarTexts();
-                await Shell.Current.GoToAsync("///wait");
+                // Comprueba si se ha creado el grupo
+                if (roomJoinResult.Success)
+                {
+                    crearSalaCommand.RaiseCanExecuteChanged();
+                    await Shell.Current.GoToAsync($"///wait?playerName={_playerName}");
+                    limpiarTexts();
+                } else
+                {
+                    _playerName = roomJoinResult.Message;
+                    NotifyPropertyChanged(nameof(PlayerName));
+                }
             }
         }
 
@@ -110,6 +118,7 @@ namespace Stack.ViewModels
             NotifyPropertyChanged(nameof(NameRoom));
             _playerName = "";
             NotifyPropertyChanged(nameof(PlayerName));
+            crearSalaCommand.RaiseCanExecuteChanged();
         }
         #endregion
 

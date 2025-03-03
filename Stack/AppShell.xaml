@@ -11,6 +11,7 @@
     <ShellContent Title="Crear Sala" Route="crearSala" ContentTemplate="{DataTemplate local:Pages.CrearSalaPage}" />
     <ShellContent Title="Unirse Sala" Route="unirseSala" ContentTemplate="{DataTemplate local:Pages.UnirseSalaPage}" />
     <ShellContent Title="Sala de Espera" Route="wait" ContentTemplate="{DataTemplate local:Pages.WaitPage}" />
+    <ShellContent Title="PrePartida" Route="prePartida" ContentTemplate="{DataTemplate local:Pages.PrePartidaPage}" />
     <ShellContent
         Title="Partida"
         ContentTemplate="{DataTemplate local:Pages.MainPage}"

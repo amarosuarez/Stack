@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Stack.Pages.PrePartidaPage"
+             xmlns:vm="clr-namespace:Stack.ViewModels"
+             Title="PrePartidaPage">
+
+    <ContentPage.BindingContext>
+        <vm:PrePartidaVM></vm:PrePartidaVM>
+    </ContentPage.BindingContext>
+
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#003366" Offset="0.0" />
+            <GradientStop Color="#D96666" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="15">
+        <Label Text="Cargando la partida"
+               FontSize="36"
+               FontAttributes="Bold"
+               TextColor="White"
+               HorizontalOptions="Center"
+               Margin="0,50,0,10" />
+
+        <!-- Nombres de los jugadores -->
+        <Label Text="{Binding PlayerName}"
+               FontSize="24"
+               FontAttributes="Bold"
+               TextColor="White"
+               HorizontalOptions="Center" />
+
+        <Label Text="{Binding OpponentName}"
+               FontSize="24"
+               FontAttributes="Bold"
+               TextColor="White"
+               HorizontalOptions="Center" />
+
+        <!-- Cuenta atrás -->
+        <Label Text="{Binding Countdown}"
+               FontSize="48"
+               FontAttributes="Bold"
+               TextColor="White"
+               HorizontalOptions="Center"
+               Margin="0,20,0,0" />
+    </VerticalStackLayout>
+</ContentPage>

@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Models;
 using Stack.ViewModels.Utilidades;
 
 namespace Stack.ViewModels
@@ -15,6 +16,7 @@ namespace Stack.ViewModels
         #region Atributos
         private String _nameRoom;
         private String _playerName;
+        private String _error;
         private DelegateCommand unirseCommand;
         private DelegateCommand volverCommand;
         #endregion
@@ -28,6 +30,8 @@ namespace Stack.ViewModels
                 if (!string.IsNullOrEmpty(value))
                 {
                     _nameRoom = value;
+                    _error = "";
+                    NotifyPropertyChanged(nameof(Error));
                     unirseCommand.RaiseCanExecuteChanged();
                 }
             }
@@ -41,9 +45,16 @@ namespace Stack.ViewModels
                 if (!string.IsNullOrEmpty(value))
                 {
                     _playerName = value;
+                    _error = "";
+                    NotifyPropertyChanged(nameof(Error));
                     unirseCommand.RaiseCanExecuteChanged();
                 }
             }
+        }
+
+        public String Error
+        {
+            get { return _error; }
         }
 
         public DelegateCommand UnirseCommand
@@ -75,21 +86,27 @@ namespace Stack.ViewModels
         {
             if (!string.IsNullOrEmpty(_nameRoom) && !string.IsNullOrEmpty(_playerName))
             {
-                Console.WriteLine($"Unirse a la sala: {_nameRoom}, con el jugador: {_playerName}");
-
                 await GlobalConnection.StartConnection();
 
                 try
                 {
-                    await GlobalConnection.connection.InvokeCoreAsync("JoinRoom", args: new[] { _nameRoom, _playerName });
-                    Console.WriteLine("JoinRoom exitoso.");
+                    RoomJoinResult roomJoinResult = await GlobalConnection.connection.InvokeAsync<RoomJoinResult>("JoinRoom", _nameRoom, _playerName, false);
 
-                    await GlobalConnection.connection.InvokeCoreAsync("ReceiveNamePlayer", args: new[] { _playerName, _nameRoom });
-                    Console.WriteLine("Nombre del jugador recibido.");
 
-                    unirseCommand.RaiseCanExecuteChanged();
-                    limpiarTexts();
-                    //await Shell.Current.GoToAsync("///wait");
+                    if (roomJoinResult.Success) {
+                        String opponentName = await GlobalConnection.connection.InvokeAsync<string>("GetOpponentName", _nameRoom);
+
+
+                        unirseCommand.RaiseCanExecuteChanged();
+                        await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}");
+                        limpiarTexts();
+                    } else
+                    {
+                        _error = roomJoinResult.Message;
+                        NotifyPropertyChanged(nameof(Error));
+                    }
+
+                    
                 }
                 catch (Exception ex)
                 {
@@ -131,6 +148,9 @@ namespace Stack.ViewModels
             NotifyPropertyChanged(nameof(NameRoom));
             _playerName = "";
             NotifyPropertyChanged(nameof(PlayerName));
+            _error = "";
+            NotifyPropertyChanged(nameof(Error));
+            unirseCommand.RaiseCanExecuteChanged();
         }
         #endregion
 

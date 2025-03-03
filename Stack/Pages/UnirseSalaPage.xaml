@@ -57,5 +57,11 @@
             HeightRequest="50"
             Command="{Binding VolverCommand}"
             Margin="0,0,0,10"/>
+        <Label Text="{Binding Error}"
+           FontSize="26"
+           FontAttributes="Bold"
+           TextColor="Black"
+           HorizontalOptions="Center"
+           Margin="0,50,0,10" />
     </VerticalStackLayout>
 </ContentPage>

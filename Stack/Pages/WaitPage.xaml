@@ -52,6 +52,11 @@
                 Text="{Binding OpponentName}"
                 FontSize="30"
                 TextColor="White"/>
+            
+            <Label
+                Text="{Binding PlayerName}"
+                FontSize="30"
+                TextColor="White"/>
         </VerticalStackLayout>
     </VerticalStackLayout>
 

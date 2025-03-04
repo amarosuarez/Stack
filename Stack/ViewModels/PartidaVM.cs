@@ -27,6 +27,7 @@ namespace Stack.ViewModels
         private PointF[] _recortadoPoints; // Puntos de la figura recortada
         private GraphicsView graphicsView;
         private DelegateCommand tappedScreenCommand;
+        private bool miTurno;
         #endregion
 
         #region Propiedades
@@ -70,6 +71,15 @@ namespace Stack.ViewModels
         {
             get { return tappedScreenCommand; }
         }
+
+        public bool MiTurno
+        {
+            get { return miTurno; }
+            set { 
+                miTurno = value;
+                tappedScreenCommand.RaiseCanExecuteChanged();
+            }
+        }
         #endregion
 
         #region Constructores
@@ -77,6 +87,8 @@ namespace Stack.ViewModels
 
         public PartidaVM(GraphicsView romboGraphicsView)
         {
+            miTurno = true;
+
             tappedScreenCommand = new DelegateCommand(tappedScreenCommandExecuted, tappedScreenCommandCanExecute);
 
             graphicsView = romboGraphicsView;
@@ -103,7 +115,7 @@ namespace Stack.ViewModels
 
         private bool tappedScreenCommandCanExecute()
         {
-            return true;
+            return miTurno;
         }
         #endregion
 
@@ -157,6 +169,8 @@ namespace Stack.ViewModels
 
             // Crear un nuevo rombo dinámico en el centro con un color aleatorio
             CreateRombo();
+            miTurno = false;
+            NotifyPropertyChanged(nameof(miTurno));
         }
 
         private void CreateRombo()

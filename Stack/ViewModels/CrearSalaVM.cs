@@ -13,8 +13,8 @@ namespace Stack.ViewModels
     public class CrearSalaVM : INotifyPropertyChanged
     {
         #region Atributos
-        private string _nameRoom;
-        private string _playerName;
+        private string _nameRoom = "hola";
+        private string _playerName = "amaro";
         private DelegateCommand crearSalaCommand;
         private DelegateCommand volverCommand;
         #endregion
@@ -76,7 +76,7 @@ namespace Stack.ViewModels
                 if (roomJoinResult.Success)
                 {
                     crearSalaCommand.RaiseCanExecuteChanged();
-                    await Shell.Current.GoToAsync($"///wait?playerName={_playerName}");
+                    await Shell.Current.GoToAsync($"///wait?playerName={_playerName}&owner=true");
                     limpiarTexts();
                 } else
                 {

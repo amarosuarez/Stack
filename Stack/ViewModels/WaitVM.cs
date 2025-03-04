@@ -12,12 +12,15 @@ using System.Threading.Tasks;
 namespace Stack.ViewModels
 {
     [QueryProperty(nameof(PlayerName), "playerName")]
+    [QueryProperty(nameof(Owner), "owner")]
     public class WaitVM : INotifyPropertyChanged
     {
         #region Atributos
         private String _opponentName;
         private String _playerName;
         private DelegateCommand volverCommand;
+        private String _owner;
+        private bool _isOwner;
         #endregion
 
         #region Propiedades
@@ -39,6 +42,18 @@ namespace Stack.ViewModels
         public DelegateCommand VolverCommand
         {
             get { return volverCommand; }
+        }
+
+        public String Owner
+        {
+            get { return _owner; }
+            set
+            {
+                _owner = value;
+                NotifyPropertyChanged();
+                _isOwner = Uri.UnescapeDataString(value).Equals("true");
+                NotifyPropertyChanged(nameof(_isOwner));
+            }
         }
         #endregion
 
@@ -91,7 +106,7 @@ namespace Stack.ViewModels
             {
                 String opponentName = await GlobalConnection.connection.InvokeAsync<string>("GetOpponentName", roomName);
 
-                await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}");
+                await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}&nameRoom={roomName}&owner={_isOwner}");
             });
         }
 

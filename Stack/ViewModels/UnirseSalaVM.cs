@@ -14,8 +14,8 @@ namespace Stack.ViewModels
     public class UnirseSalaVM : INotifyPropertyChanged
     {
         #region Atributos
-        private String _nameRoom;
-        private String _playerName;
+        private String _nameRoom = "hola";
+        private String _playerName = "auri";
         private String _error;
         private DelegateCommand unirseCommand;
         private DelegateCommand volverCommand;
@@ -98,7 +98,7 @@ namespace Stack.ViewModels
 
 
                         unirseCommand.RaiseCanExecuteChanged();
-                        await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}");
+                        await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}&nameRoom={_nameRoom}");
                         limpiarTexts();
                     } else
                     {

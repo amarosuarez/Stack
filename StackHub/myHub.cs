@@ -145,5 +145,37 @@ namespace StackHub
             return opponentName; // Si no hay oponente, retorna null
         }
 
+        public async Task<bool> StopGameAndCheckTurn(string roomName)
+        {
+
+            clsRoom room = _rooms[roomName];
+
+            // Obtener el jugador actual y el oponente
+            string currentTurn = room.CurrentTurn;
+            string opponent = room.Players.Keys.FirstOrDefault(p => p != currentTurn);
+
+            if (opponent == null)
+            {
+                return false; // No hay oponente
+            }
+
+            // Cambiar turno al otro jugador
+            room.CurrentTurn = opponent;
+
+            // Notificar a los jugadores sobre el cambio de turno
+            await Clients.Group(roomName).SendAsync("TurnChanged", room.CurrentTurn);
+
+            return true; // Se ha detenido el juego y cambiado el turno
+        }
+
+        public Task<string?> GetCurrentTurnPlayer(string roomName)
+        {
+            if (_rooms.ContainsKey(roomName) && _rooms[roomName].CurrentTurn != null)
+            {
+                return Task.FromResult<string?>(_rooms[roomName].CurrentTurn);
+            }
+            return Task.FromResult<string?>(null);
+        }
+
     }
 }

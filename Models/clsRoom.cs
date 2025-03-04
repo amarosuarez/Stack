@@ -7,6 +7,8 @@
 
         public String Name { get; set; }
 
+        public String CurrentTurn { get; set; }
+
         public Dictionary<string, string> Players { get; set; } = new Dictionary<string, string>(); // ConnectionId -> PlayerName
         #endregion
 

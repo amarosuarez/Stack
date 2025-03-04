@@ -10,12 +10,17 @@ namespace Stack.ViewModels
 {
     [QueryProperty(nameof(PlayerName), "playerName")]
     [QueryProperty(nameof(OpponentName), "opponentName")]
+    [QueryProperty(nameof(NameRoom), "nameRoom")]
+    [QueryProperty(nameof(Owner), "owner")]
     public class PrePartidaVM : INotifyPropertyChanged
     {
         #region Atributos
         private String _playerName;
         private String _opponentName;
         private String _countdown;
+        private String _nameRoom;
+        private String _owner;
+        private bool _isOwner;
         #endregion
 
         #region Propiedades
@@ -47,6 +52,26 @@ namespace Stack.ViewModels
                 NotifyPropertyChanged();
             }
         }
+
+        public String NameRoom
+        {
+            get { return _nameRoom; }
+            set
+            {
+                _nameRoom = Uri.UnescapeDataString(value);
+                NotifyPropertyChanged();
+            }
+        }
+
+        public String Owner
+        {
+            get { return _owner; }
+            set
+            {
+                _owner = value;
+                NotifyPropertyChanged();
+            }
+        }
         #endregion
 
         #region Constructores
@@ -69,7 +94,7 @@ namespace Stack.ViewModels
 
             Countdown = "¡Comienza el juego!";
             await Task.Delay(1000);
-            await Shell.Current.GoToAsync($"///partida");
+            await Shell.Current.GoToAsync($"///partida?nameRoom={_nameRoom}&owner={_owner}");
         }
         #endregion
 

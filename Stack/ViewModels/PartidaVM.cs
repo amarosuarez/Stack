@@ -12,9 +12,12 @@ using System.Collections.Generic;
 using Stack.ViewModels.Utilidades;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Stack.ViewModels
 {
+    [QueryProperty(nameof(NameRoom), "nameRoom")]
+    [QueryProperty(nameof(Owner), "owner")]
     public class PartidaVM : INotifyPropertyChanged
     {
         #region Atributos
@@ -28,6 +31,9 @@ namespace Stack.ViewModels
         private GraphicsView graphicsView;
         private DelegateCommand tappedScreenCommand;
         private bool miTurno;
+        private String nameRoom;
+        private String _owner;
+        private bool _isOwner;
         #endregion
 
         #region Propiedades
@@ -80,6 +86,34 @@ namespace Stack.ViewModels
                 tappedScreenCommand.RaiseCanExecuteChanged();
             }
         }
+
+        public String NameRoom
+        {
+            get { return nameRoom; }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    nameRoom = Uri.UnescapeDataString(value);
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public String Owner
+        {
+            get { return _owner; }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _owner = value;
+                    NotifyPropertyChanged();
+                    _isOwner = Uri.UnescapeDataString(value).Equals("true");
+                    NotifyPropertyChanged(nameof(_isOwner));
+                }
+            }
+        }
         #endregion
 
         #region Constructores
@@ -87,7 +121,8 @@ namespace Stack.ViewModels
 
         public PartidaVM(GraphicsView romboGraphicsView)
         {
-            miTurno = true;
+            miTurno = _isOwner;
+            NotifyPropertyChanged(nameof(MiTurno));
 
             tappedScreenCommand = new DelegateCommand(tappedScreenCommandExecuted, tappedScreenCommandCanExecute);
 
@@ -104,6 +139,8 @@ namespace Stack.ViewModels
 
             // Crear un rombo inicial
             CreateRombo();
+
+            GlobalConnection.connection.On<string>("PlayersReady", checkTurn);
         }
         #endregion
 
@@ -117,9 +154,37 @@ namespace Stack.ViewModels
         {
             return miTurno;
         }
-        #endregion
+        #endregion  
 
         #region Métodos
+        private async Task checkTurn(String turno)
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                // Obtener el connectionID del jugador actual
+                string currentConnectionID = await GlobalConnection.connection.InvokeAsync<string>("GetConnectionID");
+
+                // Obtener el connectionID del jugador cuyo turno es
+                string turnConnectionID = await GlobalConnection.connection.InvokeAsync<string>("GetCurrentTurnPlayer", nameRoom);
+
+                // Comparar los connectionIDs para verificar si es tu turno
+                if (currentConnectionID == turnConnectionID)
+                {
+                    // Si el connectionID coincide, es tu turno
+                    miTurno = true;
+                }
+                else
+                {
+                    // Si no coincide, no es tu turno
+                    miTurno = false;
+                }
+
+                // Notificar cambios en la propiedad MiTurno para que se actualice la UI
+                NotifyPropertyChanged(nameof(MiTurno));
+            });
+        }
+
+
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
             // Mover todos los rombos dinámicos que estén en movimiento
@@ -135,11 +200,12 @@ namespace Stack.ViewModels
             graphicsView.Invalidate();
         }
 
-        private void OnScreenTapped()
+        private async void OnScreenTapped()
         {
             // Detener el último rombo en movimiento (si existe)
             if (_dynamicRombos.Count > 0)
             {
+                await GlobalConnection.StartConnection();
                 _dynamicRombos[^1].IsMoving = false; // Detener el último rombo
 
                 // Guardar los puntos del rombo actual
@@ -164,6 +230,21 @@ namespace Stack.ViewModels
                         // Forzar el redibujado para mostrar la figura recortada
                         graphicsView.Invalidate();
                     }
+                }
+
+                // Llamada al método del Hub
+                bool result = await GlobalConnection.connection.InvokeAsync<bool>("StopGameAndCheckTurn", nameRoom);
+
+                if (result)
+                {
+                    // Realiza cualquier lógica necesaria después de que el turno haya cambiado
+                    Console.WriteLine("El turno ha cambiado con éxito.");
+                    miTurno = false;
+                    NotifyPropertyChanged(nameof(MiTurno));
+                }
+                else
+                {
+                    Console.WriteLine("No hay oponente en la sala.");
                 }
             }
 

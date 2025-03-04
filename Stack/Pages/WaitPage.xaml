@@ -17,7 +17,7 @@
     </ContentPage.Background>
     
     <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
-        <Label Text="Sala de espera"
+        <Label Text="{Binding Owner}"
            FontSize="36"
            FontAttributes="Bold"
            TextColor="White"

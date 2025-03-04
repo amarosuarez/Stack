@@ -131,9 +131,6 @@ namespace StackHub
 
             if (_rooms.ContainsKey(roomName))
             {
-                // Obtener el nombre del jugador actual
-                //var playerName = _rooms[roomName].Players[connectionId];
-
                 // Buscar el oponente en la misma sala
                 foreach (var player in _rooms[roomName].Players)
                 {

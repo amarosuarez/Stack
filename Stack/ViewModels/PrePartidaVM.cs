@@ -68,6 +68,8 @@ namespace Stack.ViewModels
             }
 
             Countdown = "¡Comienza el juego!";
+            await Task.Delay(1000);
+            await Shell.Current.GoToAsync($"///partida");
         }
         #endregion
 

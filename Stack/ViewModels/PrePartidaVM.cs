@@ -84,7 +84,7 @@ namespace Stack.ViewModels
         #region Métodos
         private async void StartCountdown()
         {
-            int countdownValue = 5;
+            int countdownValue = 0;
             while (countdownValue > 0)
             {
                 Countdown = countdownValue.ToString();

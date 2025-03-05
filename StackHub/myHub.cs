@@ -179,8 +179,6 @@ namespace StackHub
             return true;
         }
 
-
-
         public Task<string?> GetCurrentTurnPlayer(string roomName)
         {
             if (_rooms.ContainsKey(roomName) && _rooms[roomName].CurrentTurn != null)
@@ -204,8 +202,9 @@ namespace StackHub
         /// </summary>
         /// <param name="roomName">Nombre de la sala</param>
         /// <param name="colorRombo">Color del rombo</param>
-        public async void PintaRombo(String roomName, Color colorRombo)
+        public async void PintaRombo(String roomName, String colorRombo)
         {
+            Console.WriteLine($"{roomName} {colorRombo}");
             await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("PintaRombo", colorRombo);
         }
     }

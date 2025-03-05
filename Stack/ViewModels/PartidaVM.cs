@@ -13,6 +13,7 @@ using Stack.ViewModels.Utilidades;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.SignalR.Client;
+using static Microsoft.Maui.ApplicationModel.Permissions;
 
 namespace Stack.ViewModels
 {
@@ -160,6 +161,7 @@ namespace Stack.ViewModels
                 {
                     GlobalConnection.connection.On<string>("TurnChanged", checkTurn);
                     GlobalConnection.connection.On<string>("PintaRombo", pintaRombo);
+                    GlobalConnection.connection.On<float, float>("GetLastRomboPosition", setLastRomboPosition);
 
                     // Obtener el connectionID del jugador actual
                     string currentConnectionID = await GlobalConnection.connection.InvokeAsync<string>("GetConnectionID");
@@ -185,6 +187,15 @@ namespace Stack.ViewModels
             }
         }
 
+        private async void setLastRomboPosition(float posX, float posY)
+        {
+            // **Sincronizar posición exacta desde el servidor**
+            if (_dynamicRombos.Count > 0)
+            {
+                _dynamicRombos[^1].SetPosition(posX, posY);
+            }
+        }
+
         private async void pintaRombo(string color)
         {
             _colorInicial = Color.FromArgb(color);
@@ -205,23 +216,27 @@ namespace Stack.ViewModels
                 // Obtener el connectionID del jugador cuyo turno es
                 string turnConnectionID = await GlobalConnection.connection.InvokeAsync<string>("GetCurrentTurnPlayer", nameRoom);
 
-                // Comparar los connectionIDs para verificar si es tu turno
-                if (currentConnectionID == turnConnectionID)
+                // Si no es tu turno, detén el último rombo inmediatamente
+                if (currentConnectionID != turnConnectionID)
                 {
-                    // Si el connectionID coincide, es tu turno
-                    miTurno = true;
-                    CreateRombo();
+                    if (_dynamicRombos.Count > 0)
+                    {
+                        _dynamicRombos[^1].IsMoving = false;
+                    }
+                    miTurno = false;
                 }
                 else
                 {
-                    // Si no coincide, no es tu turno
-                    miTurno = false;
+                    miTurno = true;
+                    CreateRombo();
                 }
 
-                // Notificar cambios en la propiedad MiTurno para que se actualice la UI
+                // Notificar cambios en la propiedad MiTurno
                 NotifyPropertyChanged(nameof(MiTurno));
             });
         }
+
+
 
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
@@ -246,6 +261,10 @@ namespace Stack.ViewModels
 
                 // Guardar los puntos del rombo actual
                 _currentRomboPoints = GetRomboPoints(_dynamicRombos[^1]);
+                (float x, float y) = _dynamicRombos[^1].GetStoppedPosition();
+
+                await GlobalConnection.connection.InvokeCoreAsync("GetLastRomboPosition", args: new object[]
+                { nameRoom, x, y });
 
                 // Si hay un rombo anterior, comparar los puntos
                 if (_dynamicRombos.Count > 1)
@@ -273,13 +292,6 @@ namespace Stack.ViewModels
 
                 if (result)
                 {
-                    // Si es tu turno, enviar el color del nuevo rombo
-                    if (miTurno)
-                    {
-                        var colorRombo = _dynamicRombos[^1].Color;
-                        //await GlobalConnection.connection.InvokeAsync("PintaRomboi", nameRoom, colorRombo);  // Enviar color al Hub
-                    }
-
                     miTurno = false;
                     NotifyPropertyChanged(nameof(MiTurno));
                     tappedScreenCommand.RaiseCanExecuteChanged();
@@ -298,7 +310,7 @@ namespace Stack.ViewModels
         {
             Color color = _colorInicial;
 
-            await Application.Current.MainPage.DisplayAlert("Error", MiTurno.ToString(), "Aceptar");
+            //await Application.Current.MainPage.DisplayAlert("Error", MiTurno.ToString(), "Aceptar");
             if (miTurno)
             {
                 color = GetRandomColor();
@@ -367,8 +379,8 @@ namespace Stack.ViewModels
             // Calcular los puntos del rombo
             float centerX = 0 + rombo.OffsetX; // El centro del rombo dinámico
             float centerY = 0 + rombo.OffsetY; // El centro del rombo dinámico
-            float width = 100;
-            float height = 100;
+            float width = 200;
+            float height = 200;
 
             return new PointF[]
             {

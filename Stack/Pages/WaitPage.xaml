@@ -17,7 +17,7 @@
     </ContentPage.Background>
     
     <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
-        <Label Text="{Binding Owner}"
+        <Label Text="Sala de espera"
            FontSize="36"
            FontAttributes="Bold"
            TextColor="White"
@@ -31,9 +31,6 @@
                HorizontalOptions="Center"
                Margin="0,0,0,20"/>
 
-            <Label
-                Text="{Binding Owner}"></Label>
-            
             <ActivityIndicator IsRunning="True" 
                    IsVisible="True" 
                    Color="White"
@@ -50,16 +47,6 @@
             WidthRequest="200"
             HeightRequest="50"
             Command="{Binding VolverCommand}"/>
-
-            <Label
-                Text="{Binding OpponentName}"
-                FontSize="30"
-                TextColor="White"/>
-            
-            <Label
-                Text="{Binding PlayerName}"
-                FontSize="30"
-                TextColor="White"/>
         </VerticalStackLayout>
     </VerticalStackLayout>
 

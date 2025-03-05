@@ -204,8 +204,12 @@ namespace StackHub
         /// <param name="colorRombo">Color del rombo</param>
         public async void PintaRombo(String roomName, String colorRombo)
         {
-            Console.WriteLine($"{roomName} {colorRombo}");
             await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("PintaRombo", colorRombo);
+        }
+
+        public async void GetLastRomboPosition(String roomName, float posX, float posY)
+        {
+            await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("GetLastRomboPosition", posX, posY);
         }
     }
 }

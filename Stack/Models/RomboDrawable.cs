@@ -12,20 +12,21 @@
 
         public void Draw(ICanvas canvas, RectF dirtyRect)
         {
-            // Definir el tamaño del rombo
-            float romboWidth = 100;
+            // Definir el tamaño del rombo (valores más grandes)
+            float romboWidth = 200; // Aumentado
+            float romboHeight = 200; // Aumentado
 
             // Calcular el centro de la pantalla
             float centerX = dirtyRect.Width / 2;
             float centerY = dirtyRect.Height / 2;
 
             // Dibujar el rombo estático (centrado y sin movimiento)
-            DrawRombo(canvas, centerX, centerY, romboWidth, 100, Colors.Green);
+            DrawRombo(canvas, centerX, centerY, romboWidth, romboHeight, Colors.Green);
 
             // Dibujar todos los rombos dinámicos
             foreach (var rombo in _dynamicRombos)
             {
-                DrawRombo(canvas, centerX + rombo.OffsetX, centerY + rombo.OffsetY, romboWidth, 100, rombo.Color);
+                DrawRombo(canvas, centerX + rombo.OffsetX, centerY + rombo.OffsetY, romboWidth, romboHeight, rombo.Color);
             }
 
             // Dibujar la figura recortada en la esquina superior derecha
@@ -39,6 +40,7 @@
                 DrawRecortado(canvas, offsetX, offsetY);
             }
         }
+
 
         private void DrawRombo(ICanvas canvas, float centerX, float centerY, float width, float height, Color color)
         {

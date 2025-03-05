@@ -5,9 +5,9 @@
              x:Class="Stack.Pages.MainPage">
 
     <GraphicsView x:Name="RomboGraphicsView"
-      Drawable="{Binding RomboDrawable}"
-      HorizontalOptions="Fill"
-      VerticalOptions="Fill">
+        Drawable="{Binding RomboDrawable}"
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill">
         <GraphicsView.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding TappedScreenCommand}" />
         </GraphicsView.GestureRecognizers>

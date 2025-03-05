@@ -68,7 +68,7 @@ namespace Stack.ViewModels
             get { return _owner; }
             set
             {
-                _owner = value;
+                _owner = Uri.EscapeDataString(value);
                 NotifyPropertyChanged();
             }
         }

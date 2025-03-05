@@ -19,6 +19,7 @@
         {
             Name = name;
             Players = new Dictionary<string, string> { { ownerConnectionId, ownerName } };
+            CurrentTurn = ownerConnectionId;
         }
         #endregion
     }

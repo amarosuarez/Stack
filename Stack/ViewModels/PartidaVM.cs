@@ -34,6 +34,7 @@ namespace Stack.ViewModels
         private String nameRoom;
         private String _owner;
         private bool _isOwner;
+        private Color _colorInicial = null;
         #endregion
 
         #region Propiedades
@@ -107,22 +108,24 @@ namespace Stack.ViewModels
             {
                 if (!string.IsNullOrEmpty(value))
                 {
-                    _owner = value;
+                    _owner = Uri.UnescapeDataString(value);
+                    miTurno = _owner != null ? _owner.Equals("true") : false;
                     NotifyPropertyChanged();
-                    _isOwner = Uri.UnescapeDataString(value).Equals("true");
-                    NotifyPropertyChanged(nameof(_isOwner));
+                    NotifyPropertyChanged(nameof(MiTurno));
                 }
             }
         }
         #endregion
 
         #region Constructores
-        public PartidaVM() { }
+        public PartidaVM() {
+            // Inicia la conexión de SignalR de forma asíncrona
+            Task.Run(async () => await InitConnection());
+        }
 
-        public PartidaVM(GraphicsView romboGraphicsView)
+        public PartidaVM(GraphicsView romboGraphicsView) : this()
         {
-            miTurno = _isOwner;
-            NotifyPropertyChanged(nameof(MiTurno));
+            
 
             tappedScreenCommand = new DelegateCommand(tappedScreenCommandExecuted, tappedScreenCommandCanExecute);
 
@@ -139,8 +142,6 @@ namespace Stack.ViewModels
 
             // Crear un rombo inicial
             CreateRombo();
-
-            GlobalConnection.connection.On<string>("PlayersReady", checkTurn);
         }
         #endregion
 
@@ -157,6 +158,34 @@ namespace Stack.ViewModels
         #endregion  
 
         #region Métodos
+        private async Task InitConnection()
+        {
+            try
+            {
+                await GlobalConnection.StartConnection();
+
+                // Verifica si la conexión fue exitosa
+                if (GlobalConnection.connection.State == HubConnectionState.Connected)
+                {
+                    GlobalConnection.connection.On<string>("TurnChanged", checkTurn);
+                    GlobalConnection.connection.On<Color>("PintaRombo", pintaRombo);
+                }
+                else
+                {
+                    Console.WriteLine("Conexión no establecida");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error de conexión: {ex.Message}");
+            }
+        }
+
+        private void pintaRombo(Color color)
+        {
+            _colorInicial = Colors.Red;
+        }
+
         private async Task checkTurn(String turno)
         {
             await MainThread.InvokeOnMainThreadAsync(async () =>
@@ -202,7 +231,6 @@ namespace Stack.ViewModels
 
         private async void OnScreenTapped()
         {
-            // Detener el último rombo en movimiento (si existe)
             if (_dynamicRombos.Count > 0)
             {
                 await GlobalConnection.StartConnection();
@@ -232,15 +260,21 @@ namespace Stack.ViewModels
                     }
                 }
 
-                // Llamada al método del Hub
+                // Llamada al método del Hub para verificar el cambio de turno
                 bool result = await GlobalConnection.connection.InvokeAsync<bool>("StopGameAndCheckTurn", nameRoom);
 
                 if (result)
                 {
-                    // Realiza cualquier lógica necesaria después de que el turno haya cambiado
-                    Console.WriteLine("El turno ha cambiado con éxito.");
+                    // Si es tu turno, enviar el color del nuevo rombo
+                    if (miTurno)
+                    {
+                        var colorRombo = _dynamicRombos[^1].Color;
+                        //await GlobalConnection.connection.InvokeAsync("PintaRomboi", nameRoom, colorRombo);  // Enviar color al Hub
+                    }
+
                     miTurno = false;
                     NotifyPropertyChanged(nameof(MiTurno));
+                    tappedScreenCommand.RaiseCanExecuteChanged();
                 }
                 else
                 {
@@ -250,19 +284,28 @@ namespace Stack.ViewModels
 
             // Crear un nuevo rombo dinámico en el centro con un color aleatorio
             CreateRombo();
-            miTurno = false;
-            NotifyPropertyChanged(nameof(miTurno));
         }
 
-        private void CreateRombo()
+        private async void CreateRombo()
         {
+            Color color = _colorInicial;
+
+            await Application.Current.MainPage.DisplayAlert("Error", MiTurno.ToString(), "Aceptar");
+            if (miTurno)
+            {
+                color = GetRandomColor();
+
+                await GlobalConnection.connection.InvokeCoreAsync("PintaRombo", args: new[]
+                { color });
+            }
+
             var newRombo = new DynamicRombo
             {
                 OffsetX = 0,
                 OffsetY = 0,
                 MoveStep = 2, // Velocidad de movimiento
                 IsMoving = true, // Comenzar a moverse
-                Color = GetRandomColor() // Asignar un color aleatorio
+                Color = color // Asignar un color aleatorio
             };
             _dynamicRombos.Add(newRombo);
         }

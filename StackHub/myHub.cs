@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using Microsoft.AspNetCore.SignalR;
 using Models;
 
@@ -23,10 +24,14 @@ namespace StackHub
             {
                 // Si es el creador, crea el grupo
                 if (creator) {
+                    Console.WriteLine($"{connectionId} CREO LA SALA {roomName}");
                     _rooms[roomName] = new clsRoom { Name = roomName };
 
                     // Añadimos el jugador al grupo
                     _rooms[roomName].Players[connectionId] = playerName;
+
+                    // Asignar el turno inicial al primer jugador
+                    _rooms[roomName].CurrentTurn = connectionId;
 
                     await Groups.AddToGroupAsync(connectionId, roomName);
 
@@ -47,7 +52,7 @@ namespace StackHub
                     {
                         // Añadir el jugador al grupo
                         _rooms[roomName].Players[connectionId] = playerName;
-                        Console.WriteLine($"{playerName} joined room {roomName}.");
+                        Console.WriteLine($"{connectionId} joined room {roomName}.");
 
                         await Groups.AddToGroupAsync(connectionId, roomName);
 
@@ -147,26 +152,34 @@ namespace StackHub
 
         public async Task<bool> StopGameAndCheckTurn(string roomName)
         {
-
             clsRoom room = _rooms[roomName];
 
-            // Obtener el jugador actual y el oponente
+            if (string.IsNullOrEmpty(room.CurrentTurn))
+            {
+                Console.WriteLine("[SERVER] No se ha asignado un turno inicial.");
+                return false;
+            }
+
             string currentTurn = room.CurrentTurn;
+            Console.WriteLine($"[SERVER] Turno actual de: {currentTurn}");
+
             string opponent = room.Players.Keys.FirstOrDefault(p => p != currentTurn);
 
             if (opponent == null)
             {
-                return false; // No hay oponente
+                Console.WriteLine($"[SERVER] No hay oponente en la sala {roomName}");
+                return false;
             }
 
-            // Cambiar turno al otro jugador
             room.CurrentTurn = opponent;
+            Console.WriteLine($"[SERVER] Turno cambiado a: {room.CurrentTurn}");
 
-            // Notificar a los jugadores sobre el cambio de turno
             await Clients.Group(roomName).SendAsync("TurnChanged", room.CurrentTurn);
 
-            return true; // Se ha detenido el juego y cambiado el turno
+            return true;
         }
+
+
 
         public Task<string?> GetCurrentTurnPlayer(string roomName)
         {
@@ -177,5 +190,23 @@ namespace StackHub
             return Task.FromResult<string?>(null);
         }
 
+        public string GetConnectionID()
+        {
+            string connectionId = Context.ConnectionId;
+
+            //await Clients.Caller.SendAsync("GetConnectionID", connectionId);
+
+            return connectionId;
+        }
+
+        /// <summary>
+        /// Función que devuelve el color del rombo para que en ambas pantallas tengan el mismo color
+        /// </summary>
+        /// <param name="roomName">Nombre de la sala</param>
+        /// <param name="colorRombo">Color del rombo</param>
+        public async void PintaRombo(String roomName, Color colorRombo)
+        {
+            await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("PintaRombo", colorRombo);
+        }
     }
 }

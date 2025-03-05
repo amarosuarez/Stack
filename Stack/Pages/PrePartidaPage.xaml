@@ -24,6 +24,9 @@
                HorizontalOptions="Center"
                Margin="0,50,0,10" />
 
+        <Label
+            Text="{Binding Owner}"></Label>
+        
         <!-- Nombres de los jugadores -->
         <Label Text="{Binding PlayerName}"
                FontSize="24"

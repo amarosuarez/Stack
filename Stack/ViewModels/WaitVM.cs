@@ -49,7 +49,7 @@ namespace Stack.ViewModels
             get { return _owner; }
             set
             {
-                _owner = value;
+                _owner = Uri.UnescapeDataString(value);
                 NotifyPropertyChanged();
                 _isOwner = Uri.UnescapeDataString(value).Equals("true");
                 NotifyPropertyChanged(nameof(_isOwner));
@@ -106,7 +106,7 @@ namespace Stack.ViewModels
             {
                 String opponentName = await GlobalConnection.connection.InvokeAsync<string>("GetOpponentName", roomName);
 
-                await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}&nameRoom={roomName}&owner={_isOwner}");
+                await Shell.Current.GoToAsync($"///prePartida?playerName={_playerName}&opponentName={opponentName}&nameRoom={roomName}&owner={_isOwner.ToString().ToLower()}");
             });
         }
 

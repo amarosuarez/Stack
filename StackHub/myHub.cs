@@ -209,6 +209,7 @@ namespace StackHub
 
         public async void GetLastRomboPosition(String roomName, float posX, float posY)
         {
+            Console.WriteLine($"OffsetX: {posX} - OffsetY: {posY}");
             await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("GetLastRomboPosition", posX, posY);
         }
     }

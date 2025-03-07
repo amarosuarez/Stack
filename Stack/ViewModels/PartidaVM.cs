@@ -35,6 +35,7 @@ namespace Stack.ViewModels
         private String nameRoom;
         private String _owner;
         private Color _colorInicial = null;
+        private String _tuTurno;
         #endregion
 
         #region Propiedades
@@ -113,6 +114,19 @@ namespace Stack.ViewModels
                 NotifyPropertyChanged(nameof(MiTurno));
             }
         }
+
+        public String TuTurno
+        {
+            get { return _tuTurno; }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _tuTurno = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
         #endregion
 
         #region Constructores
@@ -169,11 +183,17 @@ namespace Stack.ViewModels
                     // Obtener el connectionID del jugador cuyo turno es
                     string turnConnectionID = await GlobalConnection.connection.InvokeAsync<string>("GetCurrentTurnPlayer", nameRoom);
 
-                    if (currentConnectionID == turnConnectionID) {
+                    if (currentConnectionID == turnConnectionID)
+                    {
                         await MainThread.InvokeOnMainThreadAsync(() =>
                         {
+                            colocarTurnoText(true);
                             CreateRombo();
                         });
+                    }
+                    else
+                    {
+                        colocarTurnoText(false);
                     }
                 }
                 else
@@ -233,10 +253,15 @@ namespace Stack.ViewModels
 
                 // Notificar cambios en la propiedad MiTurno
                 NotifyPropertyChanged(nameof(MiTurno));
+                colocarTurnoText(miTurno);
             });
         }
 
-
+        private void colocarTurnoText(bool miTurno)
+        {
+            _tuTurno = miTurno ? "Es tu turno" : "Es el turno del rival";
+            NotifyPropertyChanged(nameof(TuTurno));
+        }
 
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
@@ -259,35 +284,14 @@ namespace Stack.ViewModels
             {
                 _dynamicRombos[^1].IsMoving = false; // Detener el último rombo
 
-                // Guardar los puntos del rombo actual
-                _currentRomboPoints = GetRomboPoints(_dynamicRombos[^1]);
-                (float x, float y) = _dynamicRombos[^1].GetStoppedPosition();
+                // El ajuste del rombo (recorte y posición) se hace en RomboDrawable al dibujar
 
+                // Guardar la posición final ajustada
+                (float x, float y) = _dynamicRombos[^1].GetStoppedPosition();
                 await GlobalConnection.connection.InvokeCoreAsync("GetLastRomboPosition", args: new object[]
                 { nameRoom, x, y });
 
-                // Si hay un rombo anterior, comparar los puntos
-                if (_dynamicRombos.Count > 1)
-                {
-                    _lastRomboPoints = GetRomboPoints(_dynamicRombos[^2]); // Guardar los puntos del rombo anterior
-
-                    // Comparar los puntos de los rombos
-                    if (!CheckOverlap(_lastRomboPoints, _currentRomboPoints))
-                    {
-                        // Mostrar un mensaje si no hay superposición
-                        //DisplayAlert("Atención", "El nuevo rombo no encaja con el anterior.", "Aceptar");
-                    }
-                    else
-                    {
-                        // Calcular la figura recortada
-                        _recortadoPoints = CalcularRecortado(_lastRomboPoints, _currentRomboPoints);
-
-                        // Forzar el redibujado para mostrar la figura recortada
-                        graphicsView.Invalidate();
-                    }
-                }
-
-                // Llamada al método del Hub para verificar el cambio de turno
+                // Verificar cambio de turno
                 bool result = await GlobalConnection.connection.InvokeAsync<bool>("StopGameAndCheckTurn", nameRoom);
 
                 if (result)
@@ -301,9 +305,6 @@ namespace Stack.ViewModels
                     Console.WriteLine("No hay oponente en la sala.");
                 }
             }
-
-            // Crear un nuevo rombo dinámico en el centro con un color aleatorio
-            //CreateRombo();
         }
 
         private async void CreateRombo()
@@ -340,102 +341,6 @@ namespace Stack.ViewModels
                 random.NextSingle(), // Componente verde (0 a 1)
                 random.NextSingle()  // Componente azul (0 a 1)
             );
-        }
-
-        private bool CheckOverlap(PointF[] rombo1Points, PointF[] rombo2Points)
-        {
-            // Verificar si algún punto de rombo2 coincide con rombo1
-            foreach (var point in rombo2Points)
-            {
-                if (IsPointInsideRombo(point, rombo1Points))
-                {
-                    return true; // Hay superposición
-                }
-            }
-
-            return false; // No hay superposición
-        }
-
-        private PointF[] CalcularRecortado(PointF[] lastRomboPoints, PointF[] currentRomboPoints)
-        {
-            // Calcular la línea superior del rombo anterior (A)
-            float lastTop = lastRomboPoints[0].Y; // Línea superior del rombo A
-
-            // Calcular la línea derecha del rombo actual (B)
-            float currentRight = currentRomboPoints[1].X; // Línea derecha del rombo B
-
-            // Calcular los puntos de la figura recortada
-            return new PointF[]
-            {
-                new PointF(lastRomboPoints[1].X, lastTop), // Esquina superior derecha del rombo A
-                new PointF(currentRight, lastTop),         // Esquina superior derecha del rombo B
-                new PointF(currentRight, currentRomboPoints[2].Y), // Esquina inferior derecha del rombo B
-                new PointF(lastRomboPoints[1].X, currentRomboPoints[2].Y) // Esquina inferior derecha del rombo A
-            };
-        }
-
-        private PointF[] GetRomboPoints(DynamicRombo rombo)
-        {
-            // Calcular los puntos del rombo
-            float centerX = 0 + rombo.OffsetX; // El centro del rombo dinámico
-            float centerY = 0 + rombo.OffsetY; // El centro del rombo dinámico
-            float width = 200;
-            float height = 200;
-
-            return new PointF[]
-            {
-                new PointF(centerX, centerY - height / 2), // Arriba
-                new PointF(centerX + width / 2, centerY),  // Derecha
-                new PointF(centerX, centerY + height / 2), // Abajo
-                new PointF(centerX - width / 2, centerY)   // Izquierda
-            };
-        }
-
-        private bool IsPointInsideRombo(PointF point, PointF[] romboPoints)
-        {
-            // Verificar si un punto está dentro de un rombo usando el método de ray casting
-            int intersections = 0;
-            for (int i = 0; i < romboPoints.Length; i++)
-            {
-                var p1 = romboPoints[i];
-                var p2 = romboPoints[(i + 1) % romboPoints.Length];
-
-                if (RayIntersectsSegment(point, p1, p2))
-                {
-                    intersections++;
-                }
-            }
-
-            // Si el número de intersecciones es impar, el punto está dentro del rombo
-            return intersections % 2 != 0;
-        }
-
-        private bool RayIntersectsSegment(PointF point, PointF p1, PointF p2)
-        {
-            // Verificar si un rayo horizontal desde el punto intersecta el segmento p1-p2
-            if (p1.Y > p2.Y)
-            {
-                (p1, p2) = (p2, p1); // Asegurar que p1.Y <= p2.Y
-            }
-
-            if (point.Y < p1.Y || point.Y > p2.Y)
-            {
-                return false; // El rayo no intersecta el segmento
-            }
-
-            if (point.X > Math.Max(p1.X, p2.X))
-            {
-                return false; // El rayo está a la derecha del segmento
-            }
-
-            if (p1.Y == p2.Y)
-            {
-                return point.X >= Math.Min(p1.X, p2.X); // Segmento horizontal
-            }
-
-            // Calcular la intersección
-            float xIntersect = (point.Y - p1.Y) * (p2.X - p1.X) / (p2.Y - p1.Y) + p1.X;
-            return point.X <= xIntersect;
         }
         #endregion
 

@@ -6,9 +6,13 @@
         public float OffsetY { get; set; } = 0;
         public float MoveStep { get; set; } = 2; // Velocidad de movimiento
         public bool IsMoving { get; set; } = true; // Estado de movimiento
+        public float Width { get; set; } = 200;
+        public float Height { get; set; } = 200;
+
         public Color Color { get; set; } = Colors.Blue; // Color del rombo
 
         private const float MoveLimit = 100; // Límite del área de movimiento
+
 
         public void Move()
         {

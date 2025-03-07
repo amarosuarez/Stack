@@ -3,13 +3,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Stack.ViewModels"
              x:Class="Stack.Pages.MainPage">
+    
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#003366" Offset="0.0" />
+            <GradientStop Color="#D96666" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+    
+    <Grid>
+        <!-- GraphicsView -->
+        <GraphicsView x:Name="RomboGraphicsView"
+                      Drawable="{Binding RomboDrawable}"
+                      HorizontalOptions="Fill"
+                      VerticalOptions="Fill">
+            <GraphicsView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding TappedScreenCommand}" />
+            </GraphicsView.GestureRecognizers>
+        </GraphicsView>
 
-    <GraphicsView x:Name="RomboGraphicsView"
-        Drawable="{Binding RomboDrawable}"
-        HorizontalOptions="Fill"
-        VerticalOptions="Fill">
-        <GraphicsView.GestureRecognizers>
-            <TapGestureRecognizer Command="{Binding TappedScreenCommand}" />
-        </GraphicsView.GestureRecognizers>
-    </GraphicsView>
+        <!-- Label superpuesto -->
+        <Label Text="{Binding TuTurno}"
+               HorizontalOptions="Start"
+               VerticalOptions="Start"
+               Margin="50,20,0,0"
+               TextColor="White"
+               FontSize="Large"
+               BackgroundColor="Transparent" />
+    </Grid>
 </ContentPage>

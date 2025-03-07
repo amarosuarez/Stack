@@ -26,7 +26,7 @@
             // Dibujar todos los rombos dinámicos
             foreach (var rombo in _dynamicRombos)
             {
-                DrawRombo(canvas, centerX + rombo.OffsetX, centerY + rombo.OffsetY, romboWidth, romboHeight, rombo.Color);
+                DrawRombo(canvas, centerX + rombo.OffsetX, centerY + rombo.OffsetY, rombo.Width, rombo.Height, rombo.Color);
             }
 
             // Dibujar la figura recortada en la esquina superior derecha

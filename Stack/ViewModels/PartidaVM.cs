@@ -22,10 +22,10 @@ namespace Stack.ViewModels
     public class PartidaVM : INotifyPropertyChanged
     {
         #region Atributos
-        private RomboDrawable _romboDrawable;
+        private SquareDrawable _romboDrawable;
         private System.Timers.Timer _timer;
         private const float MoveLimit = 100; // Límite del área de movimiento
-        private List<DynamicRombo> _dynamicRombos = new List<DynamicRombo>();
+        private List<DynamicSquare> _dynamicSquare = new List<DynamicSquare>();
         private PointF[] _lastRomboPoints; // Puntos del rombo anterior
         private PointF[] _currentRomboPoints; // Puntos del rombo actual
         private PointF[] _recortadoPoints; // Puntos de la figura recortada
@@ -36,10 +36,14 @@ namespace Stack.ViewModels
         private String _owner;
         private Color _colorInicial = null;
         private String _tuTurno;
+        private (float lastOffsetX, float lastOffsetY) _lastRomboPosition = (0, 0);
+        private DynamicSquare _staticSquare; // Cuadrado estático
+        private float _width = 200;
+        private float _height = 200;
         #endregion
 
         #region Propiedades
-        public RomboDrawable Rombo
+        public SquareDrawable Rombo
         {
             get { return _romboDrawable; }
             set { _romboDrawable = value; }
@@ -51,10 +55,10 @@ namespace Stack.ViewModels
             set { _timer = value; }
         }
 
-        public List<DynamicRombo> DynamicRombos
+        public List<DynamicSquare> DynamicRombos
         {
-            get { return _dynamicRombos; }
-            set { _dynamicRombos = value; }
+            get { return _dynamicSquare; }
+            set { _dynamicSquare = value; }
         }
 
         public PointF[] LastRomboPoints
@@ -127,6 +131,12 @@ namespace Stack.ViewModels
                 }
             }
         }
+
+        public DynamicSquare StaticSquare
+        {
+            get { return _staticSquare; }
+            set { _staticSquare = value; }
+        }
         #endregion
 
         #region Constructores
@@ -139,9 +149,24 @@ namespace Stack.ViewModels
             tappedScreenCommand = new DelegateCommand(tappedScreenCommandExecuted, tappedScreenCommandCanExecute);
 
             graphicsView = romboGraphicsView;
+
+            // Inicializar el cuadrado estático
+            _staticSquare = new DynamicSquare
+            {
+                OffsetX = 0,
+                OffsetY = 0,
+                MoveStep = 0, // No se mueve
+                IsMoving = false, // Estático
+                Width = 200, // Tamaño del cuadrado estático
+                Height = 200,
+                Color = Colors.Green // Color del cuadrado estático
+            };
+
             // Inicializar el dibujable del rombo
-            _romboDrawable = new RomboDrawable(_dynamicRombos);
+            _romboDrawable = new SquareDrawable(_dynamicSquare, _staticSquare); // Pasar el cuadrado estático
             graphicsView.Drawable = _romboDrawable;
+
+            _dynamicSquare.Add(_staticSquare);
 
             // Configurar un temporizador para animar los rombos
             _timer = new System.Timers.Timer(16); // ~60 FPS
@@ -174,8 +199,8 @@ namespace Stack.ViewModels
                 if (GlobalConnection.connection.State == HubConnectionState.Connected)
                 {
                     GlobalConnection.connection.On<string>("TurnChanged", checkTurn);
-                    GlobalConnection.connection.On<string>("PintaRombo", pintaRombo);
-                    GlobalConnection.connection.On<float, float>("GetLastRomboPosition", setLastRomboPosition);
+                    GlobalConnection.connection.On<string, float, float>("PintaRombo", pintaRombo);
+                    GlobalConnection.connection.On<float, float, float, float, String>("GetLastRomboPosition", setLastRomboPosition);
 
                     // Obtener el connectionID del jugador actual
                     string currentConnectionID = await GlobalConnection.connection.InvokeAsync<string>("GetConnectionID");
@@ -188,7 +213,7 @@ namespace Stack.ViewModels
                         await MainThread.InvokeOnMainThreadAsync(() =>
                         {
                             colocarTurnoText(true);
-                            CreateRombo();
+                            CreateRombo(_width, _height);
                         });
                     }
                     else
@@ -207,22 +232,45 @@ namespace Stack.ViewModels
             }
         }
 
-        private async void setLastRomboPosition(float posX, float posY)
+        private async void setLastRomboPosition(float posX, float posY, float width, float height, String color)
         {
             // **Sincronizar posición exacta desde el servidor**
-            if (_dynamicRombos.Count > 0)
+            if (_dynamicSquare.Count > 0)
             {
-                _dynamicRombos[^1].SetPosition(posX, posY);
+                // **Eliminar el cuadrado anterior**
+                _dynamicSquare.Clear();
+
+                // **Crear un nuevo cuadrado con la posición, ancho y alto proporcionados**
+                var newSquare = new DynamicSquare
+                {
+                    OffsetX = 0,
+                    OffsetY = 0,
+                    Width = width,
+                    Height = height,
+                    IsMoving = false, // No se mueve después de establecer la posición
+                    Color = Color.FromArgb(color)
+                };
+
+                _width = width;
+                _height = height;
+
+                // **Agregar el nuevo cuadrado a la lista**
+                _dynamicSquare.Add(newSquare);
+
+                // **Actualizar la vista**
+                graphicsView.Invalidate();
             }
         }
 
-        private async void pintaRombo(string color)
+        private async void pintaRombo(string color, float width, float height)
         {
             _colorInicial = Color.FromArgb(color);
+            _width = width;
+            _height = height;
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                CreateRombo();
+                CreateRombo(_width, _height);
             });
         }
 
@@ -239,16 +287,16 @@ namespace Stack.ViewModels
                 // Si no es tu turno, detén el último rombo inmediatamente
                 if (currentConnectionID != turnConnectionID)
                 {
-                    if (_dynamicRombos.Count > 0)
+                    if (_dynamicSquare.Count > 0)
                     {
-                        _dynamicRombos[^1].IsMoving = false;
+                        _dynamicSquare[^1].IsMoving = false;
                     }
                     miTurno = false;
                 }
                 else
                 {
                     miTurno = true;
-                    CreateRombo();
+                    CreateRombo(_width, _height);
                 }
 
                 // Notificar cambios en la propiedad MiTurno
@@ -266,7 +314,7 @@ namespace Stack.ViewModels
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
             // Mover todos los rombos dinámicos que estén en movimiento
-            foreach (var rombo in _dynamicRombos)
+            foreach (var rombo in _dynamicSquare)
             {
                 if (rombo.IsMoving)
                 {
@@ -280,16 +328,75 @@ namespace Stack.ViewModels
 
         private async void OnScreenTapped()
         {
-            if (_dynamicRombos.Count > 0)
+            if (_dynamicSquare.Count > 0)
             {
-                _dynamicRombos[^1].IsMoving = false; // Detener el último rombo
-
-                // El ajuste del rombo (recorte y posición) se hace en RomboDrawable al dibujar
+                _dynamicSquare[^1].IsMoving = false; // Detener el último rombo
 
                 // Guardar la posición final ajustada
-                (float x, float y) = _dynamicRombos[^1].GetStoppedPosition();
+                (float x, float y) = _dynamicSquare[^1].GetStoppedPosition();
+
+                float height = _dynamicSquare[^1].Height;
+
+                if (y != _lastRomboPosition.lastOffsetY)
+                {
+                    await Shell.Current.DisplayAlert("Atención", $"Sobresale", "Aceptar");
+
+                    float finalY;
+
+                    // Comprobamos si sobresale por arriba o por abajo
+                    if (y > _lastRomboPosition.lastOffsetY)
+                    {
+                        // Sobresale por abajo
+                        float excess = y - _lastRomboPosition.lastOffsetY;
+                        height -= excess; // Reducir la altura
+                        finalY = 0; // Colocar en la posición (0, 0)
+                    }
+                    else
+                    {
+                        // Sobresale por arriba
+                        float excess = _lastRomboPosition.lastOffsetY - y;
+                        height -= excess; // Reducir la altura
+                        finalY = 0; // Colocar en la posición (0, 0)
+                    }
+
+                    if (height > 0)
+                    {
+                        await Shell.Current.DisplayAlert("Atención", $"Altura anterior {_dynamicSquare[^1].Height} Nueva altura {height}, offset anterior {_lastRomboPosition.lastOffsetY}, nuevo offset {finalY}", "Aceptar");
+
+                        // Crear un nuevo cuadrado recortado en (0, 0)
+                        var newRombo = new DynamicSquare
+                        {
+                            OffsetX = 0, // Posición X en (0, 0)
+                            OffsetY = 0, // Posición Y en (0, 0)
+                            MoveStep = 2, // Velocidad de movimiento
+                            IsMoving = false, // No se mueve después de recortar
+                            Width = _dynamicSquare[^1].Width, // Mantener el ancho
+                            Height = height, // Nueva altura recortada
+                            Color = _dynamicSquare[^1].Color // Mantener el color
+                        };
+
+                        // **Eliminar todos los cuadrados, incluido el estático**
+                        _dynamicSquare.Clear();
+
+                        // **Agregar el nuevo cuadrado recortado**
+                        _dynamicSquare.Add(newRombo);
+
+                        // Actualizar la vista
+                        graphicsView.Invalidate();
+                    }
+                    else
+                    {
+                        await Shell.Current.DisplayAlert("Atención", "La altura no es válida", "Aceptar");
+                    }
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert("Atención", $"No Sobresale", "Aceptar");
+                }
+
+                _lastRomboPosition = (x, y);
                 await GlobalConnection.connection.InvokeCoreAsync("GetLastRomboPosition", args: new object[]
-                { nameRoom, x, y });
+                { nameRoom, x, y, 200, height, _dynamicSquare[^1].Color.ToHex() });
 
                 // Verificar cambio de turno
                 bool result = await GlobalConnection.connection.InvokeAsync<bool>("StopGameAndCheckTurn", nameRoom);
@@ -307,7 +414,7 @@ namespace Stack.ViewModels
             }
         }
 
-        private async void CreateRombo()
+        private async void CreateRombo(float width, float height)
         {
             Color color = _colorInicial;
 
@@ -317,19 +424,21 @@ namespace Stack.ViewModels
                 color = GetRandomColor();
                 string colorHex = color.ToHex();
 
-                await GlobalConnection.connection.InvokeCoreAsync("PintaRombo", args: new[]
-                { nameRoom, colorHex });
+                await GlobalConnection.connection.InvokeCoreAsync("PintaRombo", args: new object[]
+                { nameRoom, colorHex, width, height });
             }
 
-            var newRombo = new DynamicRombo
+            var newRombo = new DynamicSquare
             {
                 OffsetX = 0,
                 OffsetY = 0,
                 MoveStep = 2, // Velocidad de movimiento
                 IsMoving = true, // Comenzar a moverse
+                Width = width,
+                Height = height,
                 Color = color // Asignar un color aleatorio
             };
-            _dynamicRombos.Add(newRombo);
+            _dynamicSquare.Add(newRombo);
         }
 
         private Color GetRandomColor()

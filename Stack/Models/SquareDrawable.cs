@@ -1,36 +1,38 @@
 ﻿namespace Models
 {
-    public class RomboDrawable : IDrawable
+    public class SquareDrawable : IDrawable
     {
-        private List<DynamicRombo> _dynamicRombos;
+        private List<DynamicSquare> _dynamicSquares; // Cuadrados dinámicos
+        private DynamicSquare _staticSquare; // Cuadrado estático
         private PointF[] _recortadoPoints; // Puntos de la figura recortada
 
-        public RomboDrawable(List<DynamicRombo> dynamicRombos)
+        public SquareDrawable(List<DynamicSquare> dynamicSquares, DynamicSquare staticSquare)
         {
-            _dynamicRombos = dynamicRombos;
+            _dynamicSquares = dynamicSquares;
+            _staticSquare = staticSquare;
         }
 
         public void Draw(ICanvas canvas, RectF dirtyRect)
         {
-            // Definir el tamaño del rombo (valores más grandes)
-            float romboWidth = 200; // Aumentado
-            float romboHeight = 200; // Aumentado
-
             // Calcular el centro de la pantalla
             float centerX = dirtyRect.Width / 2;
             float centerY = dirtyRect.Height / 2;
 
-            // Dibujar el rombo estático (centrado y sin movimiento)
-            DrawRombo(canvas, centerX, centerY, romboWidth, romboHeight, Colors.Green);
+            // Dibujar el cuadrado estático (centrado y sin movimiento)
+            //DrawSquare(canvas, centerX, centerY, _staticSquare.Width, _staticSquare.Height, _staticSquare.Color);
 
-            // Dibujar todos los rombos dinámicos
-            foreach (var rombo in _dynamicRombos)
+            // Dibujar todos los cuadrados dinámicos
+            foreach (var square in _dynamicSquares)
             {
-                DrawRombo(canvas, centerX + rombo.OffsetX, centerY + rombo.OffsetY, rombo.Width, rombo.Height, rombo.Color);
+                // Asegurarse de que el ancho y el alto no sean 0 antes de dibujar
+                if (square.Width > 0 && square.Height > 0)
+                {
+                    DrawSquare(canvas, centerX + square.OffsetX, centerY + square.OffsetY, square.Width, square.Height, square.Color);
+                }
             }
 
-            // Dibujar la figura recortada en la esquina superior derecha
-            if (_recortadoPoints != null)
+            // Dibujar la figura recortada en la esquina superior derecha (si existe)
+            if (_recortadoPoints != null && _recortadoPoints.Length > 0)
             {
                 float margin = 20; // Margen desde la esquina superior derecha
                 float offsetX = dirtyRect.Width - 100 - margin; // Posición X de la figura recortada
@@ -41,18 +43,17 @@
             }
         }
 
-
-        private void DrawRombo(ICanvas canvas, float centerX, float centerY, float width, float height, Color color)
+        private void DrawSquare(ICanvas canvas, float centerX, float centerY, float width, float height, Color color)
         {
-            // Crear un PathF para el rombo
+            // Crear un PathF para el cuadrado
             PathF path = new PathF();
-            path.MoveTo(centerX, centerY - height / 2); // Arriba
-            path.LineTo(centerX + width / 2, centerY); // Derecha
-            path.LineTo(centerX, centerY + height / 2); // Abajo
-            path.LineTo(centerX - width / 2, centerY); // Izquierda
-            path.Close(); // Cerrar el path para completar el rombo
+            path.MoveTo(centerX - width / 2, centerY - height / 2); // Esquina superior izquierda
+            path.LineTo(centerX + width / 2, centerY - height / 2); // Esquina superior derecha
+            path.LineTo(centerX + width / 2, centerY + height / 2); // Esquina inferior derecha
+            path.LineTo(centerX - width / 2, centerY + height / 2); // Esquina inferior izquierda
+            path.Close(); // Cerrar el path para completar el cuadrado
 
-            // Dibujar el rombo
+            // Dibujar el cuadrado
             canvas.FillColor = color;
             canvas.StrokeColor = Colors.Black;
             canvas.StrokeSize = 2;

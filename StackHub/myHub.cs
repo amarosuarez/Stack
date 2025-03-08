@@ -23,7 +23,8 @@ namespace StackHub
             if (!_rooms.ContainsKey(roomName))
             {
                 // Si es el creador, crea el grupo
-                if (creator) {
+                if (creator)
+                {
                     Console.WriteLine($"{connectionId} CREO LA SALA {roomName}");
                     _rooms[roomName] = new clsRoom { Name = roomName };
 
@@ -36,14 +37,16 @@ namespace StackHub
                     await Groups.AddToGroupAsync(connectionId, roomName);
 
                     playerJoined = true;
-                } else
+                }
+                else
                 {
                     message = "La sala no existe";
                 }
-            } else
+            }
+            else
             {
                 // Comprobamos que el otro jugador no se llame igual
-                String opponentName =  await GetOpponentName(roomName);
+                String opponentName = await GetOpponentName(roomName);
 
                 if (!opponentName.ToLower().Equals(playerName.ToLower()))
                 {
@@ -65,7 +68,8 @@ namespace StackHub
                     {
                         message = "El grupo ya está completo";
                     }
-                } else
+                }
+                else
                 {
                     playerJoined = false;
                     message = "El otro jugador se llama igual";
@@ -202,15 +206,15 @@ namespace StackHub
         /// </summary>
         /// <param name="roomName">Nombre de la sala</param>
         /// <param name="colorRombo">Color del rombo</param>
-        public async void PintaRombo(String roomName, String colorRombo)
+        public async void PintaRombo(String roomName, String colorRombo, float width, float height)
         {
-            await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("PintaRombo", colorRombo);
+            await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("PintaRombo", colorRombo, width, height);
         }
 
-        public async void GetLastRomboPosition(String roomName, float posX, float posY)
+        public async void GetLastRomboPosition(String roomName, float posX, float posY, float width, float height, String color)
         {
             Console.WriteLine($"OffsetX: {posX} - OffsetY: {posY}");
-            await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("GetLastRomboPosition", posX, posY);
+            await Clients.GroupExcept(roomName, Context.ConnectionId).SendAsync("GetLastRomboPosition", posX, posY, width, height, color);
         }
     }
 }

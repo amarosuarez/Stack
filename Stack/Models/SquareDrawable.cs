@@ -22,7 +22,7 @@
             //DrawSquare(canvas, centerX, centerY, _staticSquare.Width, _staticSquare.Height, _staticSquare.Color);
 
             // Dibujar todos los cuadrados dinámicos
-            foreach (var square in _dynamicSquares)
+            foreach (var square in _dynamicSquares.ToList()) // Crear una copia de la lista
             {
                 // Asegurarse de que el ancho y el alto no sean 0 antes de dibujar
                 if (square.Width > 0 && square.Height > 0)

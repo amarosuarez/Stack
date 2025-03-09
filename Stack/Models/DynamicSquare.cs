@@ -1,32 +1,52 @@
-﻿
+﻿using Stack.Enums;
+
 namespace Models
 {
     public class DynamicSquare
     {
         public float OffsetX { get; set; } = 0;
         public float OffsetY { get; set; } = 0;
-        public float MoveStep { get; set; } = 2; // Velocidad de movimiento
+        public float MoveStep { get; set; } // Velocidad de movimiento
         public bool IsMoving { get; set; } = true; // Estado de movimiento
+        public MovementDirection MovementDirection { get; set; } = MovementDirection.Vertical; // Dirección de movimiento
 
         public Color Color { get; set; } // Color del cuadrado
 
-        private const float MoveLimit = 300; // Límite del área de movimiento
+        public float MoveLimit { get; set; } // Límite del área de movimiento
 
         public float Width { get; set; }
         public float Height { get; set; }
-
 
         public void Move()
         {
             if (!IsMoving) return; // No mover si está detenido
 
-            // Mover el cuadrado verticalmente
-            OffsetY += MoveStep;
+            // Mover el cuadrado en la dirección especificada
+            switch (MovementDirection)
+            {
+                case MovementDirection.Vertical:
+                    OffsetY += MoveStep; // Mover verticalmente
+                    break;
+
+                case MovementDirection.Horizontal:
+                    OffsetX += MoveStep; // Mover horizontalmente
+                    break;
+            }
 
             // Si el cuadrado supera el límite, invertir la dirección
-            if (OffsetY > MoveLimit || OffsetY < -MoveLimit)
+            if (MovementDirection == MovementDirection.Vertical)
             {
-                MoveStep = -MoveStep; // Invertir la dirección
+                if (OffsetY > MoveLimit || OffsetY < -MoveLimit)
+                {
+                    MoveStep = -MoveStep; // Invertir la dirección vertical
+                }
+            }
+            else if (MovementDirection == MovementDirection.Horizontal)
+            {
+                if (OffsetX > MoveLimit || OffsetX < -MoveLimit)
+                {
+                    MoveStep = -MoveStep; // Invertir la dirección horizontal
+                }
             }
         }
 
@@ -50,7 +70,7 @@ namespace Models
             OffsetY = 0;
             Width = width;
             Height = height;
-            //Color = color;
+            MoveLimit = MovementDirection == MovementDirection.Horizontal ? width * 2 : height * 2;
             IsMoving = false; // Asegurar que se detiene correctamente
         }
     }

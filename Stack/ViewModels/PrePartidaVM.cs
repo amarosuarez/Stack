@@ -82,8 +82,10 @@ namespace Stack.ViewModels
         #endregion
 
         #region Métodos
-        private async void StartCountdown()
+        public async void StartCountdown()
         {
+            await Shell.Current.DisplayAlert("Atención", "Has ganado jefeeeee", "Aceptar");
+
             int countdownValue = 0;
             while (countdownValue > 0)
             {
@@ -94,7 +96,10 @@ namespace Stack.ViewModels
 
             Countdown = "¡Comienza el juego!";
             await Task.Delay(1000);
+
+            await Shell.Current.Navigation.PopAsync(); // Elimina la página actual
             await Shell.Current.GoToAsync($"///partida?nameRoom={_nameRoom}&owner={_owner}");
+
         }
         #endregion
 

@@ -3,14 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Stack.ViewModels"
              x:Class="Stack.Pages.MainPage">
-    
+
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#003366" Offset="0.0" />
             <GradientStop Color="#D96666" Offset="1.0" />
         </LinearGradientBrush>
     </ContentPage.Background>
-    
+
     <Grid>
         <!-- GraphicsView -->
         <GraphicsView x:Name="RomboGraphicsView"
@@ -30,5 +30,23 @@
                TextColor="White"
                FontSize="Large"
                BackgroundColor="Transparent" />
+
+        <!-- Mensaje "Colocado perfectamente" -->
+        <Label x:Name="PerfectPlacementLabel"
+           Text="✅Colocado perfectamente✅"
+           HorizontalOptions="Center"
+           VerticalOptions="Start"
+           Margin="0,80,0,0"
+           TextColor="Gold"
+           FontSize="32"
+           FontAttributes="Bold"
+           BackgroundColor="Transparent"
+           IsVisible="{Binding ShowPerfect}">
+            <Label.Shadow>
+                <Shadow Brush="Black"
+                Offset="2, 2"
+                Radius="4" />
+            </Label.Shadow>
+        </Label>
     </Grid>
 </ContentPage>
